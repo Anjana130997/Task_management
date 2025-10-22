@@ -1,12 +1,64 @@
 {
   "users": [
     {
-      "id": "1761130239169",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "password": "$2b$10$cJuI9V9ONmdKnuCmZ1SksO5KXanb9pxOSh341zzhnkeDOJN0bjNGW"
+      "id": "u_demo",
+      "name": "Demo User",
+      "email": "demo@example.com",
+      "password": "$2a$10$R9sAn1p4kQJk0cQ9qZQp2u6k3q9nE0hK5z1nqY8gQ/m/6C9kY8Q9K"
+    },
+    {
+      "id": "73988b46-b8fc-45c6-9ad5-9f84c4fe6a35",
+      "name": "indu",
+      "email": "indu@gmail.com",
+      "password": "$2b$10$KU5iIh95dZRVef/bUVVRruusvKNJRi3yOpkPI.g3bbsMua7gQipS2",
+      "createdAt": "2025-10-22T19:47:09.345Z"
     }
   ],
-  "tasks": [],
-  "comments": []
+  "tasks": [
+    {
+      "id": "8ca3d170-b4f2-47af-9fc1-81cb3c4cbc2c",
+      "title": "code",
+      "description": "code and complete the assignment",
+      "status": "in-progress",
+      "priority": "high",
+      "due_date": "2025-10-24",
+      "tags": [
+        "important",
+        "priority"
+      ],
+      "assigned_to": "",
+      "files": [
+        "6df834e0-4be6-495b-9409-327edf4d1b52"
+      ],
+      "comments": [
+        "ba49e994-63fe-42c6-aed2-5a338c928908"
+      ],
+      "createdBy": "73988b46-b8fc-45c6-9ad5-9f84c4fe6a35",
+      "createdAt": "2025-10-22T19:48:56.964Z",
+      "deleted": false
+    }
+  ],
+  "comments": [
+    {
+      "id": "ba49e994-63fe-42c6-aed2-5a338c928908",
+      "taskId": "8ca3d170-b4f2-47af-9fc1-81cb3c4cbc2c",
+      "author": "73988b46-b8fc-45c6-9ad5-9f84c4fe6a35",
+      "text": "finish this page",
+      "createdAt": "2025-10-22T19:49:27.407Z",
+      "deleted": false
+    }
+  ],
+  "files": [
+    {
+      "id": "6df834e0-4be6-495b-9409-327edf4d1b52",
+      "taskId": "8ca3d170-b4f2-47af-9fc1-81cb3c4cbc2c",
+      "originalName": "Screenshot 2025-07-20 091457.png",
+      "storedName": "1761162557059-544291035.png",
+      "path": "/uploads/1761162557059-544291035.png",
+      "mimetype": "image/png",
+      "size": 19285,
+      "uploadedBy": "73988b46-b8fc-45c6-9ad5-9f84c4fe6a35",
+      "createdAt": "2025-10-22T19:49:17.063Z"
+    }
+  ]
 }

@@ -1,12 +1,13 @@
+// routes/analyticsRoutes.js
 import express from "express";
-import { authMiddleware } from "../middleware/authMiddleware.js";
-import { getOverview, getUserPerformance, getTaskTrends, exportTasks } from "../controllers/analyticsController.js";
+import { getTaskOverview, getUserPerformance, getTaskTrends, exportTasksData } from "../controllers/analyticsController.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/overview", authMiddleware, getOverview);
-router.get("/user-performance", authMiddleware, getUserPerformance);
-router.get("/trends", authMiddleware, getTaskTrends);
-router.get("/export", authMiddleware, exportTasks);
+router.get("/overview", verifyToken, getTaskOverview);
+router.get("/performance", verifyToken, getUserPerformance);
+router.get("/trends", verifyToken, getTaskTrends);
+router.get("/export", verifyToken, exportTasksData);
 
 export default router;

@@ -1,56 +1,62 @@
+// controllers/commentController.js
 import db from "../utils/db.js";
+import { randomUUID } from "crypto";
 
-// Add comment
+// Add comment to task
 export const addComment = async (req, res) => {
-  const { taskId, content } = req.body;
-  if (!taskId || !content)
-    return res.status(400).json({ message: "Task ID and content required" });
+  const { taskId } = req.params;
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ message: "Text required" });
 
   await db.read();
-  const task = db.data.tasks.find(t => t.id === taskId && !t.deleted);
+  const task = db.data.tasks.find((t) => t.id === taskId && !t.deleted);
   if (!task) return res.status(404).json({ message: "Task not found" });
 
-  const newComment = {
-    id: Date.now().toString(),
-    taskId,
-    userId: req.userId,
-    content,
-    created_at: new Date().toISOString(),
-  };
-
-  db.data.comments.push(newComment);
+  const comment = { id: randomUUID(), taskId, author: req.userId, text, createdAt: new Date().toISOString(), deleted: false };
+  db.data.comments.push(comment);
+  task.comments = task.comments || [];
+  task.comments.push(comment.id);
   await db.write();
-  res.status(201).json(newComment);
+  res.status(201).json(comment);
 };
 
-// Get comments
-export const getComments = async (req, res) => {
+// Get comments for a task
+export const getCommentsByTask = async (req, res) => {
   const { taskId } = req.params;
   await db.read();
-  const comments = db.data.comments.filter(c => c.taskId === taskId);
+  const comments = db.data.comments.filter((c) => c.taskId === taskId && !c.deleted);
   res.json(comments);
 };
 
 // Update comment
 export const updateComment = async (req, res) => {
-  const { id } = req.params;
-  const { content } = req.body;
+  const { commentId } = req.params;
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ message: "Text required" });
+
   await db.read();
-  const comment = db.data.comments.find(c => c.id === id && c.userId === req.userId);
-  if (!comment) return res.status(404).json({ message: "Comment not found" });
-  comment.content = content;
+  const idx = db.data.comments.findIndex((c) => c.id === commentId && !c.deleted);
+  if (idx === -1) return res.status(404).json({ message: "Comment not found" });
+  const comment = db.data.comments[idx];
+  if (comment.author !== req.userId) return res.status(403).json({ message: "Not allowed" });
+
+  comment.text = text;
+  comment.updatedAt = new Date().toISOString();
+  db.data.comments[idx] = comment;
   await db.write();
   res.json(comment);
 };
 
-// Delete comment
+// Delete comment (soft)
 export const deleteComment = async (req, res) => {
-  const { id } = req.params;
+  const { commentId } = req.params;
   await db.read();
-  const index = db.data.comments.findIndex(c => c.id === id && c.userId === req.userId);
-  if (index === -1) return res.status(404).json({ message: "Comment not found" });
+  const idx = db.data.comments.findIndex((c) => c.id === commentId && !c.deleted);
+  if (idx === -1) return res.status(404).json({ message: "Comment not found" });
+  const comment = db.data.comments[idx];
+  if (comment.author !== req.userId) return res.status(403).json({ message: "Not allowed" });
 
-  db.data.comments.splice(index, 1);
+  comment.deleted = true;
   await db.write();
   res.json({ message: "Comment deleted" });
 };
