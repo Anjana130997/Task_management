@@ -1,8 +1,9 @@
 import express from "express";
-import {authMiddleware} from "../middleware/authMiddleware.js";
-import { addComment,getComments,updateComment,deleteComment } from "../controllers/commentController";
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { addComment, getComments, updateComment, deleteComment } from "../controllers/commentController.js";
 
-const router=express.Router();
+const router = express.Router();
+
 router.post("/", authMiddleware, addComment);
 router.get("/:taskId", authMiddleware, getComments);
 router.put("/:id", authMiddleware, updateComment);

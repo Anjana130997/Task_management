@@ -1,17 +1,18 @@
-import {Low} from "lowdb"; //manages reading and writing data asynchronously
-import {JSONFile} from "lowdb/node";
-import {join} from "path";
+import { Low } from "lowdb";
+import { JSONFile } from "lowdb/node";
+import fs from "fs";
+import path from "path";
 
-const file=join(process.cwd(),"backend","db.json"); //Defines the physical file location.
-const adapter=new JSONFile(file); //Creates the connection to the file.
-const db=new Low(adapter); //Creates the Database Instance.
+const file = path.join(process.cwd(), "db.json");
+const adapter = new JSONFile(file);
+const db = new Low(adapter);
 
-await db.read(); //Loads data into memory.
-db.data ||={
-    user:[],
-    tasks:[],
-    comments:[]
-}
-await db.write(); //Saves the current state (including new defaults).
+const initDB = async () => {
+  await db.read();
+  db.data = db.data || { users: [], tasks: [], comments: [] };
+  await db.write();
+};
+
+await initDB();
 
 export default db;

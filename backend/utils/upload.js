@@ -1,18 +1,19 @@
-// Configure multer for file uploads
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 
-// Store uploaded files in backend/uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join("backend", "uploads")),
-  filename: (req, file, cb) => cb(null, Date.now() + "_" + file.originalname),
+const UPLOADS_FOLDER = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(UPLOADS_FOLDER)) fs.mkdirSync(UPLOADS_FOLDER);
+
+export const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOADS_FOLDER),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + "-" + file.originalname);
+  },
 });
 
-// File type validation
-const fileFilter = (req, file, cb) => {
-  const allowed = ["image/jpeg", "image/png", "application/pdf"];
-  if (allowed.includes(file.mimetype)) cb(null, true);
-  else cb(new Error("Invalid file type"));
-};
-
-export const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
+export const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});

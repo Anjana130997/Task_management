@@ -1,0 +1,12 @@
+{
+  "users": [
+    {
+      "id": "1761130239169",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "password": "$2b$10$cJuI9V9ONmdKnuCmZ1SksO5KXanb9pxOSh341zzhnkeDOJN0bjNGW"
+    }
+  ],
+  "tasks": [],
+  "comments": []
+}

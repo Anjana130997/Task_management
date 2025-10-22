@@ -1,25 +1,27 @@
-const express=require("express");
-const cors=require("cors");
-const path=require("path");
+import express from "express";
+import cors from "cors";
+import taskRoutes from "./routes/taskRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import commentRoutes from "./routes/commentRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
-const authRoutes=require("./routes/authRoutes");
-const taskRoutes=require("./routes/taskRoutes");
-const commentRoutes=require("./routes/commentRoutes");
-const analyticsRoutes=require("./routes/analyticsRoutes");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const app=express();
+const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
-// set up a static file server for a specific directory,
-//  making the files inside it 
-// publicly accessible on a particular URL path.
-app.use("/uploads",express.static(path.join(__dirname,"uploads")));
+app.use("/uploads", express.static(join(__dirname, "uploads"))); // Serve uploaded files
 
-app.use("/api/auth",authRoutes);
-app.use("/tasks",taskRoutes);
-app.use("/api/comments",commentRoutes);
-app.use("api/analytics",analyticsRoutes);
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
-const PORT=4000;
-app.listen(PORT,()=>console.log(`Server is listening on port ${PORT}`));
+const PORT = 4000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
