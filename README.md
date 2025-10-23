@@ -15,97 +15,136 @@ A full-stack **Task Management Web Application** that allows users to **create, 
 ---
 
 ## ⚙️ Setup Instructions
-
 ### 📦 Clone the Repository
+
 git clone https://github.com/Anjana130997/Task_management.git
+---
 cd Task_management
-🧭 Folder Structure
-.
+
+## 🧭 Folder Structure
+
+```bash
+Task-Management-System/
 ├── backend/
 │   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── taskController.js
+│   │   ├── commentController.js
+│   │   └── fileController.js
+│   ├── middlewares/
+│   │   └── authMiddleware.js
 │   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── taskRoutes.js
+│   │   ├── commentRoutes.js
+│   │   └── fileRoutes.js
 │   ├── utils/
-│   ├── db.json
+│   │   ├── db.js
+│   │   └── sanitize.js
 │   ├── uploads/
-│   └── server.js
-└── frontend/
-    ├── src/
-    ├── public/
-    └── vite.config.js
+│   ├── db.json
+│   ├── server.js
+│   ├── package.json
+│   └── .env
+│
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   │   └── api.js
+│   │   ├── components/
+│   │   │   ├── TaskCard.jsx
+│   │   │   ├── FileUpload.jsx
+│   │   │   └── CommentBox.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── pages/
+│   │   │   ├── Login.jsx
+│   │   │   ├── Signup.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   └── TaskDetails.jsx
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── public/
+│   ├── package.json
+│   ├── vite.config.js
+│   └── .env
+│
+└── README.md
+```
 
-🧩 How to Run the Application
-Start the Backend
-cd backend
-npm install
-npm run dev
-Server runs at: http://localhost:4000
+🧩 Run the Application
 
-Start the Frontend
-cd frontend
-npm install
-npm run dev
-App runs at: http://localhost:5173
+| Step | Command       | Description                               |
+| ---- | ------------- | ----------------------------------------- |
+| 1️⃣  | `cd backend`  | Move into backend directory               |
+| 2️⃣  | `npm install` | Install backend dependencies              |
+| 3️⃣  | `npm run dev` | Start backend at `http://localhost:4000`  |
+| 4️⃣  | `cd frontend` | Move into frontend directory              |
+| 5️⃣  | `npm install` | Install frontend dependencies             |
+| 6️⃣  | `npm run dev` | Start frontend at `http://localhost:5173` |
+
 
 🧠 Architecture Decisions
-LowDB (JSON) instead of SQL or MongoDB
-Used for simplicity and portability — ideal for small demo projects.
+| Component        | Technology    | Reason                              |
+| ---------------- | ------------- | ----------------------------------- |
+| Database         | JSON (LowDB)  | Lightweight, easy to manage locally |
+| Authentication   | JWT           | Secure and stateless auth           |
+| File Handling    | Multer        | Handles uploads efficiently         |
+| State Management | React Context | Simpler than Redux for small apps   |
+| Routing          | React Router  | Clean navigation between views      |
+| Styling          | Custom CSS    | No frameworks; full design control  |
 
-JWT Authentication
-Secure token-based authentication that works statelessly with Axios interceptors.
-
-Multer for file uploads
-Stores files in /uploads and keeps metadata in db.json.
-
-Frontend state management
-Used React Context (AuthContext) instead of Redux to keep it lightweight.
-
-Routing
-Used react-router-dom for navigation between login, signup, and dashboard pages.
 
 💭 Assumptions Made
-Each user can only see their own tasks or tasks assigned to them.
+| Assumption | Explanation                                              |
+| ---------- | -------------------------------------------------------- |
+| 1          | Each user only sees their created or assigned tasks      |
+| 2          | Only logged-in users can comment (no anonymous comments) |
+| 3          | Files limited to 5 MB each                               |
+| 4          | JSON file sufficient for demo data                       |
+| 5          | Intended to run locally for testing/demo                 |
 
-Only task creator or assignee can comment.
-
-File uploads are small (<5MB).
-
-JSON-based database is sufficient for this project scale.
-
-App will run locally for demo purposes (not deployed).
 
 🧾 API Documentation
 Authentication
-Method	Endpoint	Description
-POST	/api/auth/register	Register a new user
-POST	/api/auth/login	Login existing user
-GET	/api/auth/profile	Get logged-in user info
+| Method | Endpoint             | Description              |
+| ------ | -------------------- | ------------------------ |
+| POST   | `/api/auth/register` | Register new user        |
+| POST   | `/api/auth/login`    | Login existing user      |
+| GET    | `/api/auth/profile`  | Get current user profile |
+
 
 Tasks
 Method	Endpoint	Description
-GET	/api/tasks	Get all tasks
-GET	/api/tasks/:id	Get single task
-POST	/api/tasks	Create new task
-PUT	/api/tasks/:id	Update task
-DELETE	/api/tasks/:id	Delete task
+| Method | Endpoint         | Description    |
+| ------ | ---------------- | -------------- |
+| GET    | `/api/tasks`     | Get all tasks  |
+| GET    | `/api/tasks/:id` | Get task by ID |
+| POST   | `/api/tasks`     | Create task    |
+| PUT    | `/api/tasks/:id` | Update task    |
+| DELETE | `/api/tasks/:id` | Delete task    |
+
 
 Comments
-Method	Endpoint	Description
-GET	/api/comments/:taskId	Get comments for a task
-POST	/api/comments/:taskId	Add a comment
-PUT	/api/comments/:commentId	Update comment
-DELETE	/api/comments/:commentId	Delete comment
+| Method | Endpoint                   | Description             |
+| ------ | -------------------------- | ----------------------- |
+| GET    | `/api/comments/:taskId`    | Get comments for a task |
+| POST   | `/api/comments/:taskId`    | Add new comment         |
+| PUT    | `/api/comments/:commentId` | Edit existing comment   |
+| DELETE | `/api/comments/:commentId` | Delete a comment        |
+
 
 Files
-Method	Endpoint	Description
-POST	/api/tasks/:id/files	Upload files
-GET	/uploads/:filename	Download file
-DELETE	/api/files/:fileId	Delete file
+| Method | Endpoint               | Description            |
+| ------ | ---------------------- | ---------------------- |
+| POST   | `/api/tasks/:id/files` | Upload file for a task |
+| GET    | `/uploads/:filename`   | Download uploaded file |
+| DELETE | `/api/files/:fileId`   | Delete file            |
+
 
 🔑 Test User Credentials
-Use these credentials to test the app (after signup or by importing manually into db.json):
-Email: testuser@example.com
-Password: 123456
+| Field    | Value                  |
+| -------- | ---------------------- |
+| Email    | `testuser@example.com` |
+| Password | `123456`               |
 
-Copy code
-Email: testuser@example.com
-Password: 123456
