@@ -13,8 +13,19 @@ A full-stack **Task Management Web Application** that allows users to **create, 
 - 🎨 Clean responsive UI with React
 
 ---
+## 🖼️ Screenshots / Demo
+
+### 🏠 Dashboard
+![Dashboard](frontend/public/screenshots/dashboard.png)
+
+### 📊 Analytics Page
+![Analytics](frontend/public/screenshots/analytics.png)
+
+### 📋 Task Details
+![Task Details](frontend/public/screenshots/taskDetails.png)
 
 ## ⚙️ Setup Instructions
+
 ### 📦 Clone the Repository
 
 git clone https://github.com/Anjana130997/Task_management.git
