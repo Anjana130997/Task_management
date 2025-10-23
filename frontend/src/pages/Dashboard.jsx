@@ -1,3 +1,4 @@
+// src/pages/Dashboard.jsx
 import React, { useEffect, useState } from "react";
 import api from "../api/api";
 import TaskCard from "../components/TaskCard";
@@ -14,22 +15,30 @@ export default function Dashboard() {
   const [filters, setFilters] = useState({ search: "", status: "", priority: "" });
   const [confirm, setConfirm] = useState({ show: false, id: null });
 
-  const fetchTasks = async (page = 1) => {
+  // 🔹 Unified fetch function
+  const fetchTasks = async (page = meta.page) => {
     setLoading(true);
     try {
-      const res = await api.getTasks({ page, limit: meta.limit, ...filters });
-      setTasks(res.data.tasks);
-      setMeta(res.data.meta || { total: res.data.length || res.data.tasks?.length || 0, page, limit: meta.limit });
+      const params = { page, limit: meta.limit, ...filters };
+      const res = await api.getTasks(params);
+
+      // Handle both possible response structures
+      const data = res.data;
+      setTasks(data.tasks || data || []);
+      setMeta(data.meta || { total: (data.tasks || data || []).length, page, limit: meta.limit });
     } catch (err) {
-      console.error(err);
+      console.error("❌ Fetch error:", err);
+      alert("Could not load tasks");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
+  // 🔹 Auto fetch when filters or page change
   useEffect(() => {
-    fetchTasks(1);
+    fetchTasks(meta.page);
     // eslint-disable-next-line
-  }, []);
+  }, [filters, meta.page]);
 
   const openCreate = () => {
     setEditTask(null);
@@ -38,17 +47,30 @@ export default function Dashboard() {
 
   const handleSave = async (payload) => {
     try {
+      let newTask;
       if (editTask) {
-        await api.updateTask(editTask.id, payload);
+        const res = await api.updateTask(editTask.id, payload);
+        newTask = res.data;
+        setTasks((prev) =>
+          prev.map((t) => (t.id === editTask.id ? newTask : t))
+        );
       } else {
-        await api.createTask(payload);
+        const res = await api.createTask(payload);
+        newTask = res.data;
+        // 🔹 Instantly update UI with new task
+        setTasks((prev) => [newTask, ...prev]);
       }
       setOpenForm(false);
-      fetchTasks(1);
+      setEditTask(null);
     } catch (err) {
-      console.error(err);
+      console.error("❌ Save error:", err);
       alert("Error saving task");
     }
+  };
+
+  const handleEdit = (task) => {
+    setEditTask(task);
+    setOpenForm(true);
   };
 
   const handleDelete = (id) => setConfirm({ show: true, id });
@@ -57,9 +79,10 @@ export default function Dashboard() {
     try {
       await api.deleteTask(confirm.id);
       setConfirm({ show: false, id: null });
-      fetchTasks(meta.page);
+      setTasks((prev) => prev.filter((t) => t.id !== confirm.id));
     } catch (err) {
-      console.error(err);
+      console.error("❌ Delete error:", err);
+      alert("Could not delete task");
     }
   };
 
@@ -70,42 +93,85 @@ export default function Dashboard() {
       <div className="page-head">
         <h2>Tasks</h2>
         <div>
-          <button className="btn primary" onClick={openCreate}>New Task</button>
+          <button className="btn primary" onClick={openCreate}>
+            New Task
+          </button>
         </div>
       </div>
 
       <div className="filters">
-        <input placeholder="Search..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} />
-        <select value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})}>
+        <input
+          placeholder="Search..."
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+        />
+        <select
+          value={filters.status}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+        >
           <option value="">All status</option>
           <option value="todo">To do</option>
           <option value="in-progress">In progress</option>
           <option value="done">Done</option>
         </select>
 
-        <select value={filters.priority} onChange={e => setFilters({...filters, priority: e.target.value})}>
+        <select
+          value={filters.priority}
+          onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+        >
           <option value="">All priority</option>
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
 
-        <button className="btn subtle" onClick={() => fetchTasks(1)}>Apply</button>
+        <button className="btn subtle" onClick={() => fetchTasks(1)}>
+          Apply
+        </button>
       </div>
 
       <div className="grid">
-        {tasks.length ? tasks.map(t => <TaskCard key={t.id} task={t} onDelete={handleDelete} />) : <div className="empty">No tasks yet</div>}
+        {tasks.length ? (
+          tasks.map((t) => (
+            <TaskCard key={t.id} task={t} onDelete={handleDelete} onEdit={handleEdit} />
+          ))
+        ) : (
+          <div className="empty">No tasks yet</div>
+        )}
       </div>
 
       <div className="pagination">
-        <button className="btn subtle" onClick={() => fetchTasks(Math.max(1, meta.page - 1))}>Prev</button>
+        <button
+          className="btn subtle"
+          disabled={meta.page === 1}
+          onClick={() => setMeta((m) => ({ ...m, page: Math.max(1, m.page - 1) }))}
+        >
+          Prev
+        </button>
         <span>Page {meta.page}</span>
-        <button className="btn subtle" onClick={() => fetchTasks(meta.page + 1)}>Next</button>
+        <button
+          className="btn subtle"
+          onClick={() => setMeta((m) => ({ ...m, page: m.page + 1 }))}
+        >
+          Next
+        </button>
       </div>
 
-      {openForm && <TaskFormModal initial={editTask} onClose={() => setOpenForm(false)} onSave={handleSave} />}
+      {openForm && (
+        <TaskFormModal
+          initial={editTask}
+          onClose={() => setOpenForm(false)}
+          onSave={handleSave}
+        />
+      )}
 
-      {confirm.show && <Confirm message="Delete this task?" onConfirm={confirmDelete} onCancel={() => setConfirm({ show: false, id: null })} />}
+      {confirm.show && (
+        <Confirm
+          message="Delete this task?"
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirm({ show: false, id: null })}
+        />
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+// src/pages/Analytics.jsx
 import React, { useEffect, useState } from "react";
 import api from "../api/api";
 import Loader from "../components/Loader";
@@ -35,6 +36,7 @@ export default function Analytics() {
       setOverview(res.data);
     } catch (err) {
       console.error(err);
+      alert("Could not load analytics");
     }
     setLoading(false);
   };

@@ -1,3 +1,4 @@
+// src/components/Confirm.jsx
 import React from "react";
 
 export default function Confirm({ message = "Are you sure?", onConfirm, onCancel }) {

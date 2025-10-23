@@ -1,25 +1,35 @@
+// src/pages/TaskDetails.jsx
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/api";
 import Loader from "../components/Loader";
+import { useAuth } from "../context/AuthContext"; // ✅ added
 
 export default function TaskDetails() {
   const { id } = useParams();
+  const nav = useNavigate();
+  const { user } = useAuth(); // ✅ get logged-in user
+
   const [task, setTask] = useState(null);
   const [comments, setComments] = useState([]);
-  const [commentText, setCommentText] = useState("");
-  const [file, setFile] = useState(null);
+  const [newComment, setNewComment] = useState("");
+  const [editingComment, setEditingComment] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [files, setFiles] = useState([]);
 
+  // -------------------- LOAD DATA --------------------
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.getTask(id);
-      setTask(res.data);
-      const resC = await api.getComments(id);
-      setComments(resC.data);
+      const [taskRes, commentsRes] = await Promise.all([
+        api.getTask(id),
+        api.getComments(id),
+      ]);
+      setTask(taskRes.data);
+      setComments(commentsRes.data || []);
     } catch (err) {
       console.error(err);
+      alert("Could not load task details");
     }
     setLoading(false);
   };
@@ -29,67 +39,189 @@ export default function TaskDetails() {
     // eslint-disable-next-line
   }, [id]);
 
+  // -------------------- COMMENTS --------------------
   const addComment = async () => {
-    if (!commentText.trim()) return;
-    await api.addComment(id, { text: commentText });
-    setCommentText("");
-    load();
+    if (!newComment.trim()) return;
+    try {
+      await api.addComment(id, {
+        text: newComment,
+        userName: user?.name || user?.email || "Anonymous", // ✅ include name/email
+      });
+      setNewComment("");
+      load();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add comment");
+    }
   };
 
+  const startEdit = (comment) => setEditingComment({ ...comment });
+
+  const saveEdit = async () => {
+    try {
+      await api.updateComment(editingComment.id, { text: editingComment.text });
+      setEditingComment(null);
+      load();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update comment");
+    }
+  };
+
+  const cancelEdit = () => setEditingComment(null);
+
+  const deleteComment = async (commentId) => {
+    if (!window.confirm("Delete this comment?")) return;
+    try {
+      await api.deleteComment(commentId);
+      load();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete comment");
+    }
+  };
+
+  // -------------------- FILES --------------------
   const upload = async () => {
-    if (!file) return alert("Select file");
-    const fd = new FormData();
-    fd.append("files", file);
-    await api.uploadFiles(id, fd);
-    setFile(null);
-    load();
+    if (!files.length) return alert("No files selected");
+    const formData = new FormData();
+    files.forEach((f) => formData.append("files", f));
+    try {
+      await api.uploadFiles(id, formData);
+      setFiles([]);
+      load();
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed");
+    }
   };
 
-  if (loading || !task) return <Loader />;
+  const deleteFile = async (fileId) => {
+    if (!window.confirm("Delete this file?")) return;
+    try {
+      await api.deleteFile(fileId);
+      load();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete file");
+    }
+  };
+
+  const downloadFile = async (fileId, name) => {
+    try {
+      const res = await api.downloadFile(fileId);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", name);
+      document.body.appendChild(link);
+      link.click();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to download file");
+    }
+  };
+
+  // -------------------- RENDER --------------------
+  if (loading) return <Loader />;
+  if (!task) return <div className="empty">Task not found</div>;
 
   return (
-    <div className="container page">
-      <div className="page-head">
-        <h2>{task.title}</h2>
-        <div className="badges">
-          <span className={`badge ${task.priority}`}>{task.priority}</span>
-          <span className="badge status">{task.status}</span>
+    <div className="container">
+      <button className="btn subtle" onClick={() => nav(-1)}>← Back</button>
+
+      <h2>{task.title}</h2>
+      <p className="muted">{task.description}</p>
+
+      {/* FILE SECTION */}
+      <div className="section">
+        <h4>Attachments</h4>
+
+        <div className="file-upload">
+          <input
+            type="file"
+            multiple
+            onChange={(e) => setFiles([...e.target.files])}
+          />
+          <button className="btn primary" onClick={upload}>Upload</button>
         </div>
+
+        {task.files?.length ? (
+          <ul className="file-list">
+            {task.files.map((f) => (
+              <li key={f.id} className="file-item">
+                <span className="file-name">{f.originalName || f.name || f.file_name}</span>
+                <div className="file-actions">
+                  <button
+                    className="btn small"
+                    onClick={() => downloadFile(f.id, f.name || "file")}
+                  >
+                    Download
+                  </button>
+                  <button
+                    className="btn danger small"
+                    onClick={() => deleteFile(f.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="muted small">No files yet</div>
+        )}
       </div>
 
-      <p>{task.description}</p>
+      {/* COMMENTS SECTION */}
+      <div className="section">
+        <h4>Comments</h4>
 
-      <section className="section">
-        <h3>Files</h3>
-        <div className="files">
-          {task.files && task.files.length ? task.files.map(fId => {
-            const f = (task.files && task.files) && null; // metadata loaded at server
-            // our server returns files under task.files array of ids; we included files in task response earlier
-            return null;
-          }) : <div className="muted">No files attached</div>}
-        </div>
-
-        <div className="upload-row">
-          <input type="file" onChange={e => setFile(e.target.files[0])} />
-          <button className="btn" onClick={upload}>Upload</button>
-        </div>
-      </section>
-
-      <section className="section">
-        <h3>Comments</h3>
         <div className="comment-form">
-          <input placeholder="Write a comment" value={commentText} onChange={e => setCommentText(e.target.value)} />
-          <button className="btn" onClick={addComment}>Add</button>
+          <input
+            placeholder="Write a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+          />
+          <button className="btn primary" onClick={addComment}>Post</button>
         </div>
+
         <ul className="comments">
-          {comments.length ? comments.map(c => (
-            <li key={c.id}>
-              <div><strong>{c.author || "User"}</strong> <span className="muted small">{new Date(c.createdAt).toLocaleString()}</span></div>
-              <div>{c.text}</div>
-            </li>
-          )) : <div className="muted">No comments</div>}
+          {comments.length ? (
+            comments.map((c) => (
+              <li key={c.id} className="comment-item">
+                {editingComment && editingComment.id === c.id ? (
+                  <div className="comment-edit">
+                    <input
+                      value={editingComment.text}
+                      onChange={(e) =>
+                        setEditingComment({ ...editingComment, text: e.target.value })
+                      }
+                    />
+                    <div className="comment-actions">
+                      <button className="btn primary small" onClick={saveEdit}>Save</button>
+                      <button className="btn subtle small" onClick={cancelEdit}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="comment-text">{c.text}</div>
+                    <div className="comment-meta">
+                      By <strong>{c.user?.name || c.userName || c.user?.email || "Anonymous"}</strong>
+                    </div>
+                    <div className="comment-actions">
+                      <button className="btn small" onClick={() => startEdit(c)}>Edit</button>
+                      <button className="btn danger small" onClick={() => deleteComment(c.id)}>Delete</button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))
+          ) : (
+            <div className="muted small">No comments yet</div>
+          )}
         </ul>
-      </section>
+      </div>
     </div>
   );
 }

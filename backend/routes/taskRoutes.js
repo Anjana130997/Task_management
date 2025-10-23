@@ -21,7 +21,7 @@ router.get("/:id", verifyToken, getTaskById);
 router.put("/:id", verifyToken, updateTask);
 router.delete("/:id", verifyToken, deleteTask);
 
-// Upload files for a task (field name: files)
+// Upload files for a task (field: files)
 router.post("/:id/files", verifyToken, upload.array("files", 5), addFilesToTask);
 
 export default router;
