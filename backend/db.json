@@ -23,6 +23,14 @@
       "password": "$2a$10$zvXOHVzKZO5Pq7abgdyC7u.ToGUEvVd2nGpxGCC83AkuZt0tDk5y2",
       "createdAt": "2025-10-23T08:59:45.600Z",
       "deleted": false
+    },
+    {
+      "id": "cc3ec6d5-0319-4f47-b2dd-ba0a40ccde4f",
+      "name": "test",
+      "email": "testuser@example.com",
+      "password": "$2a$10$aqlf1edL9UFUL7qNcYhAOeLTGgvQC0tmixXs1MGqB3VK3T17VNe8q",
+      "createdAt": "2025-10-25T07:35:21.383Z",
+      "deleted": false
     }
   ],
   "tasks": [
@@ -89,6 +97,25 @@
       "deleted": false,
       "completedAt": "2025-10-23T08:40:56.560Z",
       "updatedAt": "2025-10-23T08:40:56.560Z"
+    },
+    {
+      "id": "1eb14aa8-92b2-4238-9d08-4c0d814b646f",
+      "title": "assignment complete",
+      "description": "complete the given assignment",
+      "status": "in-progress",
+      "priority": "high",
+      "due_date": "2025-10-25",
+      "tags": [
+        "highly important"
+      ],
+      "assigned_to": null,
+      "files": [
+        "6a61c791-1f6f-4635-94c1-a99838067a71"
+      ],
+      "comments": [],
+      "createdBy": "cc3ec6d5-0319-4f47-b2dd-ba0a40ccde4f",
+      "createdAt": "2025-10-25T07:36:29.186Z",
+      "deleted": false
     }
   ],
   "comments": [
@@ -154,6 +181,18 @@
       "size": 19285,
       "uploadedBy": "b3ed27ce-ab12-4241-828d-7ef259a5afc4",
       "createdAt": "2025-10-23T08:44:25.979Z",
+      "deleted": false
+    },
+    {
+      "id": "6a61c791-1f6f-4635-94c1-a99838067a71",
+      "taskId": "1eb14aa8-92b2-4238-9d08-4c0d814b646f",
+      "originalName": "Screenshot 2025-07-19 193347.png",
+      "storedName": "1761379706214-796856568.png",
+      "path": "/uploads/1761379706214-796856568.png",
+      "mimetype": "image/png",
+      "size": 70793,
+      "uploadedBy": "cc3ec6d5-0319-4f47-b2dd-ba0a40ccde4f",
+      "createdAt": "2025-10-25T08:08:26.220Z",
       "deleted": false
     }
   ],

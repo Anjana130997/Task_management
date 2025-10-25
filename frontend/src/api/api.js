@@ -49,11 +49,12 @@ export default {
   downloadFile: (fileId) =>
     api.get(`/files/${fileId}/download`, { responseType: "blob" }),
 
-  // 🔹 Comments
-  addComment: (taskId, data) => api.post(`/comments/${taskId}`, data),
-  getComments: (taskId) => api.get(`/comments/${taskId}`),
-  updateComment: (commentId, data) => api.put(`/comments/${commentId}`, data),
-  deleteComment: (commentId) => api.delete(`/comments/${commentId}`),
+  // 🔹 Comments (fixed)
+addComment: (taskId, data) => api.post(`/comments/${taskId}`, data),
+getComments: (taskId) => api.get(`/comments/${taskId}`),
+updateComment: (commentId, data) => api.put(`/comments/${commentId}`, data),
+deleteComment: (commentId) => api.delete(`/comments/${commentId}`),
+
 
   // 🔹 Analytics
   overview: () => api.get("/analytics/overview"),

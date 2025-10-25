@@ -1,104 +1,130 @@
 // controllers/commentController.js
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
-import db from "../data/db.json" assert { type: "json" };
-
-const DB_PATH = "./data/db.json";
-
-/**
- * 🔹 Utility to persist DB changes
- */
-function saveDB() {
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
-}
+import db from "../utils/db.js"; // ✅ LowDB instance
 
 /**
  * 🔹 Create a new comment
  */
-export const addComment = (req, res) => {
-  const { taskId, text } = req.body;
-  const userId = req.user?.id;
+export const addComment = async (req, res, next) => {
+  try {
+    const { taskId, text } = req.body;
+    const userId = req.userId; // ✅ consistent with your auth middleware
 
-  const user = db.users.find((u) => u.id === userId);
-  if (!user) return res.status(404).json({ message: "User not found" });
+    await db.read();
 
-  const newComment = {
-    id: uuidv4(),
-    taskId,
-    author: user.id,
-    authorName: user.name, // ✅ include author name
-    text,
-    createdAt: new Date().toISOString(),
-    deleted: false,
-  };
+    db.data.users = db.data.users || [];
+    db.data.comments = db.data.comments || [];
+    db.data.tasks = db.data.tasks || [];
 
-  db.comments.push(newComment);
+    const user = db.data.users.find((u) => u.id === userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  // Attach comment to task
-  const task = db.tasks.find((t) => t.id === taskId);
-  if (task) {
-    task.comments = task.comments || [];
-    task.comments.push(newComment.id);
+    const newComment = {
+      id: uuidv4(),
+      taskId,
+      author: user.id,
+      authorName: user.name,
+      text,
+      createdAt: new Date().toISOString(),
+      deleted: false,
+    };
+
+    db.data.comments.push(newComment);
+
+    // ✅ Attach comment to task
+    const task = db.data.tasks.find((t) => t.id === taskId);
+    if (task) {
+      task.comments = task.comments || [];
+      task.comments.push(newComment.id);
+    }
+
+    await db.write();
+    res.status(201).json(newComment);
+  } catch (err) {
+    next(err);
   }
-
-  saveDB();
-  res.status(201).json(newComment);
 };
 
 /**
  * 🔹 Get all comments for a task
  */
-export const getCommentsByTask = (req, res) => {
-  const { taskId } = req.params;
+export const getCommentsByTask = async (req, res, next) => {
+  try {
+    const { taskId } = req.params;
+    await db.read();
 
-  const comments = db.comments
-    .filter((c) => c.taskId === taskId && !c.deleted)
-    .map((c) => ({
-      ...c,
-      authorName:
-        db.users.find((u) => u.id === c.author)?.name || "Anonymous", // ✅ populate name
-    }));
+    db.data.users = db.data.users || [];
+    db.data.comments = db.data.comments || [];
 
-  res.json(comments);
+    const comments = db.data.comments
+      .filter((c) => c.taskId === taskId && !c.deleted)
+      .map((c) => ({
+        ...c,
+        authorName:
+          db.data.users.find((u) => u.id === c.author)?.name || "Anonymous",
+      }));
+
+    res.json(comments);
+  } catch (err) {
+    next(err);
+  }
 };
 
 /**
  * 🔹 Update a comment
  */
-export const updateComment = (req, res) => {
-  const { commentId } = req.params;
-  const { text } = req.body;
-  const userId = req.user?.id;
+export const updateComment = async (req, res, next) => {
+  try {
+    const { commentId } = req.params;
+    const { text } = req.body;
+    const userId = req.userId;
 
-  const comment = db.comments.find((c) => c.id === commentId);
-  if (!comment) return res.status(404).json({ message: "Comment not found" });
+    await db.read();
+    db.data.comments = db.data.comments || [];
 
-  if (comment.author !== userId)
-    return res.status(403).json({ message: "Unauthorized" });
+    const idx = db.data.comments.findIndex((c) => c.id === commentId);
+    if (idx === -1) return res.status(404).json({ message: "Comment not found" });
 
-  comment.text = text || comment.text;
-  comment.updatedAt = new Date().toISOString();
+    const comment = db.data.comments[idx];
+    if (comment.author !== userId)
+      return res.status(403).json({ message: "Unauthorized" });
 
-  saveDB();
-  res.json(comment);
+    comment.text = text || comment.text;
+    comment.updatedAt = new Date().toISOString();
+
+    db.data.comments[idx] = comment;
+    await db.write();
+    res.json(comment);
+  } catch (err) {
+    next(err);
+  }
 };
 
 /**
  * 🔹 Delete a comment (soft delete)
  */
-export const deleteComment = (req, res) => {
-  const { commentId } = req.params;
-  const userId = req.user?.id;
+export const deleteComment = async (req, res, next) => {
+  try {
+    const { commentId } = req.params;
+    const userId = req.userId;
 
-  const comment = db.comments.find((c) => c.id === commentId);
-  if (!comment) return res.status(404).json({ message: "Comment not found" });
+    await db.read();
+    db.data.comments = db.data.comments || [];
 
-  if (comment.author !== userId)
-    return res.status(403).json({ message: "Unauthorized" });
+    const idx = db.data.comments.findIndex((c) => c.id === commentId);
+    if (idx === -1) return res.status(404).json({ message: "Comment not found" });
 
-  comment.deleted = true;
-  comment.deletedAt = new Date().toISOString();
+    const comment = db.data.comments[idx];
+    if (comment.author !== userId)
+      return res.status(403).json({ message: "Unauthorized" });
 
-  saveDB();
-  res.json({ message: "Comment deleted successfully" });
+    comment.deleted = true;
+    comment.deletedAt = new Date().toISOString();
+    db.data.comments[idx] = comment;
+
+    await db.write();
+    res.json({ message: "Comment deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
 };

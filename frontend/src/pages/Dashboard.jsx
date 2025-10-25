@@ -1,4 +1,3 @@
-// src/pages/Dashboard.jsx
 import React, { useEffect, useState } from "react";
 import api from "../api/api";
 import TaskCard from "../components/TaskCard";
@@ -12,20 +11,37 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [editTask, setEditTask] = useState(null);
-  const [filters, setFilters] = useState({ search: "", status: "", priority: "" });
+
+  // Separate filter inputs (typed values) vs applied filters (used in API)
+  const [filterInputs, setFilterInputs] = useState({
+    search: "",
+    status: "",
+    priority: "",
+  });
+  const [filters, setFilters] = useState({
+    search: "",
+    status: "",
+    priority: "",
+  });
+
   const [confirm, setConfirm] = useState({ show: false, id: null });
 
-  // 🔹 Unified fetch function
-  const fetchTasks = async (page = meta.page) => {
+  // 🔹 Fetch tasks
+  const fetchTasks = async (page = meta.page, activeFilters = filters) => {
     setLoading(true);
     try {
-      const params = { page, limit: meta.limit, ...filters };
+      const params = { page, limit: meta.limit, ...activeFilters };
       const res = await api.getTasks(params);
-
-      // Handle both possible response structures
       const data = res.data;
+
       setTasks(data.tasks || data || []);
-      setMeta(data.meta || { total: (data.tasks || data || []).length, page, limit: meta.limit });
+      setMeta(
+        data.meta || {
+          total: (data.tasks || data || []).length,
+          page,
+          limit: meta.limit,
+        }
+      );
     } catch (err) {
       console.error("❌ Fetch error:", err);
       alert("Could not load tasks");
@@ -34,7 +50,7 @@ export default function Dashboard() {
     }
   };
 
-  // 🔹 Auto fetch when filters or page change
+  // 🔹 Fetch whenever filters or page change
   useEffect(() => {
     fetchTasks(meta.page);
     // eslint-disable-next-line
@@ -51,13 +67,10 @@ export default function Dashboard() {
       if (editTask) {
         const res = await api.updateTask(editTask.id, payload);
         newTask = res.data;
-        setTasks((prev) =>
-          prev.map((t) => (t.id === editTask.id ? newTask : t))
-        );
+        setTasks((prev) => prev.map((t) => (t.id === editTask.id ? newTask : t)));
       } else {
         const res = await api.createTask(payload);
         newTask = res.data;
-        // 🔹 Instantly update UI with new task
         setTasks((prev) => [newTask, ...prev]);
       }
       setOpenForm(false);
@@ -86,6 +99,12 @@ export default function Dashboard() {
     }
   };
 
+  // 🔹 Apply button handler
+  const applyFilters = () => {
+    setFilters(filterInputs);
+    setMeta((m) => ({ ...m, page: 1 })); // reset to first page
+  };
+
   if (loading) return <Loader />;
 
   return (
@@ -99,15 +118,21 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* 🔹 Filters Section */}
       <div className="filters">
         <input
-          placeholder="Search..."
-          value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          placeholder="Search tasks..."
+          value={filterInputs.search}
+          onChange={(e) =>
+            setFilterInputs({ ...filterInputs, search: e.target.value })
+          }
         />
+
         <select
-          value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          value={filterInputs.status}
+          onChange={(e) =>
+            setFilterInputs({ ...filterInputs, status: e.target.value })
+          }
         >
           <option value="">All status</option>
           <option value="todo">To do</option>
@@ -116,8 +141,10 @@ export default function Dashboard() {
         </select>
 
         <select
-          value={filters.priority}
-          onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+          value={filterInputs.priority}
+          onChange={(e) =>
+            setFilterInputs({ ...filterInputs, priority: e.target.value })
+          }
         >
           <option value="">All priority</option>
           <option value="low">Low</option>
@@ -125,26 +152,35 @@ export default function Dashboard() {
           <option value="high">High</option>
         </select>
 
-        <button className="btn subtle" onClick={() => fetchTasks(1)}>
+        <button className="btn subtle" onClick={applyFilters}>
           Apply
         </button>
       </div>
 
+      {/* 🔹 Task Grid */}
       <div className="grid">
         {tasks.length ? (
           tasks.map((t) => (
-            <TaskCard key={t.id} task={t} onDelete={handleDelete} onEdit={handleEdit} />
+            <TaskCard
+              key={t.id}
+              task={t}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+            />
           ))
         ) : (
-          <div className="empty">No tasks yet</div>
+          <div className="empty">No tasks found</div>
         )}
       </div>
 
+      {/* 🔹 Pagination */}
       <div className="pagination">
         <button
           className="btn subtle"
           disabled={meta.page === 1}
-          onClick={() => setMeta((m) => ({ ...m, page: Math.max(1, m.page - 1) }))}
+          onClick={() =>
+            setMeta((m) => ({ ...m, page: Math.max(1, m.page - 1) }))
+          }
         >
           Prev
         </button>
@@ -157,6 +193,7 @@ export default function Dashboard() {
         </button>
       </div>
 
+      {/* 🔹 Modals */}
       {openForm && (
         <TaskFormModal
           initial={editTask}

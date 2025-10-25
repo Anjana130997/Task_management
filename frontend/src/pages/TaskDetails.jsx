@@ -3,12 +3,12 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/api";
 import Loader from "../components/Loader";
-import { useAuth } from "../context/AuthContext"; // ✅ added
+import { useAuth } from "../context/AuthContext";
 
 export default function TaskDetails() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { user } = useAuth(); // ✅ get logged-in user
+  const { user } = useAuth();
 
   const [task, setTask] = useState(null);
   const [comments, setComments] = useState([]);
@@ -21,9 +21,10 @@ export default function TaskDetails() {
   const load = async () => {
     setLoading(true);
     try {
+      // ✅ Make sure we're fetching comments from `/api/comments/:taskId`
       const [taskRes, commentsRes] = await Promise.all([
         api.getTask(id),
-        api.getComments(id),
+        api.getComments(id), // ✅ correct endpoint
       ]);
       setTask(taskRes.data);
       setComments(commentsRes.data || []);
@@ -45,7 +46,7 @@ export default function TaskDetails() {
     try {
       await api.addComment(id, {
         text: newComment,
-        userName: user?.name || user?.email || "Anonymous", // ✅ include name/email
+        userName: user?.name || user?.email || "Anonymous",
       });
       setNewComment("");
       load();
@@ -207,7 +208,7 @@ export default function TaskDetails() {
                   <div>
                     <div className="comment-text">{c.text}</div>
                     <div className="comment-meta">
-                      By <strong>{c.user?.name || c.userName || c.user?.email || "Anonymous"}</strong>
+                      By <strong>{c.authorName || c.userName || "Anonymous"}</strong>
                     </div>
                     <div className="comment-actions">
                       <button className="btn small" onClick={() => startEdit(c)}>Edit</button>

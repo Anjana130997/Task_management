@@ -5,13 +5,13 @@ import {
   updateComment,
   deleteComment,
 } from "../controllers/commentController.js";
-import { authenticateToken } from "../middleware/authMiddleware.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/:taskId", authenticateToken, addComment);
-router.get("/:taskId", authenticateToken, getCommentsByTask);
-router.put("/:commentId", authenticateToken, updateComment);
-router.delete("/:commentId", authenticateToken, deleteComment);
+router.post("/:taskId", verifyToken, addComment);
+router.get("/:taskId", verifyToken, getCommentsByTask);
+router.put("/:commentId", verifyToken, updateComment);
+router.delete("/:commentId", verifyToken, deleteComment);
 
 export default router;
